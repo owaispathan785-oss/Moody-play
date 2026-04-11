@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moody Play</title>
+  
+  <!-- SEO & Meta -->
+  <meta name="description" content="Discover music based on your mood with AI.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Login Overlay -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-glass-card">
+      <div class="login-header">
+        <i class="ph-fill ph-waveform"></i>
+        <h2>Moody Play</h2>
+        <p>Sign in to discover your vibe</p>
+      </div>
+      <form id="loginForm" class="login-form">
+        <div class="input-group">
+          <i class="ph ph-envelope-simple"></i>
+          <input type="email" id="loginEmail" placeholder="Email address" required>
+        </div>
+        <div class="input-group">
+          <i class="ph ph-lock-key"></i>
+          <input type="password" id="loginPassword" placeholder="Password" required>
+        </div>
+        <button type="submit" class="primary-btn login-btn">Log In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Playlist Modal -->
+  <div class="login-overlay hidden" id="createPlaylistOverlay" style="z-index: 10000;">
+    <div class="login-glass-card">
+      <div class="login-header">
+        <h2>New Playlist</h2>
+        <p>Give your playlist a name.</p>
+      </div>
+      <form id="createPlaylistForm" class="login-form">
+        <div class="input-group">
+          <i class="ph ph-list-dashes"></i>
+          <input type="text" id="playlistNameInput" placeholder="Playlist Name" required autocomplete="off">
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 16px;">
+          <button type="button" class="text-btn" id="cancelPlaylistBtn" style="flex: 1;">Cancel</button>
+          <button type="submit" class="primary-btn login-btn" style="flex: 1; margin: 0;">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add to Playlist Dropdown -->
+  <div class="playlist-dropdown hidden" id="addToPlaylistDropdown">
+    <h4>Add to Playlist</h4>
+    <ul id="dropdownPlaylistList"></ul>
+  </div>
+
+  <!-- Dynamic Background Blob -->
+  <div class="bg-blob" id="bgBlob"></div>
+
+  <!-- Main App Layout -->
+  <div class="app-layout" id="mainAppLayout" style="display: none;">
+    
+    <!-- Sidebar: Chat & Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <i class="ph-fill ph-waveform"></i>
+        <h1>Moody Play</h1>
+      </div>
+
+      <nav class="sidebar-nav">
+        <ul>
+          <li class="active" id="navDiscover"><i class="ph ph-compass"></i> <span>Discover</span></li>
+          <li id="navLibrary"><i class="ph ph-heart"></i> <span>My Library</span></li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-playlists">
+        <div class="playlists-header">
+          <h3>PLAYLISTS</h3>
+          <button class="icon-btn" id="createPlaylistBtn" title="Create Playlist"><i class="ph ph-plus"></i></button>
+        </div>
+        <ul id="playlistList" class="playlist-list">
+          <!-- Injected via JS -->
+        </ul>
+      </div>
+
+      <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+          <h3>AI DJ Assistant</h3>
+          <p>Tell me your vibe</p>
+        </div>
+        
+        <div class="chat-history" id="chatHistory">
+          <!-- Initial Welcome Message -->
+          <div class="message-bubble ai animate-in">
+            <p>Hey! How are you feeling today? (e.g. "I'm stressed", "aaj bhut maza aa raha hai", "padhai karni hai")</p>
+          </div>
+        </div>
+        
+        <form class="chat-form" id="chatForm">
+          <input type="text" id="chatInput" placeholder="I'm feeling..." autocomplete="off">
+          <button type="submit" class="send-btn" id="sendBtn">
+            <i class="ph-bold ph-paper-plane-right"></i>
+          </button>
+        </form>
+      </div>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <header class="top-header">
+        <div class="env-widget" id="envWidget">
+          <span id="timeDisplay" class="env-item"><i class="ph ph-clock"></i> --:--</span>
+          <span id="weatherDisplay" class="env-item"><i class="ph ph-thermometer"></i> --°C</span>
+        </div>
+        <div class="search-box">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" id="topSearchInput" placeholder="Search for songs, artists, or podcasts..." autocomplete="off">
+        </div>
+        <div class="user-profile">
+          <button class="icon-btn logout-btn" id="logoutBtn" title="Log Out"><i class="ph ph-sign-out"></i></button>
+          <img src="https://ui-avatars.com/api/?name=User&background=6c5ce7&color=fff" alt="Profile" class="avatar" id="userAvatar">
+        </div>
+      </header>
+
+      <div class="scrollable-content">
+        <!-- Hero Section (Changes based on mood) -->
+        <section class="mood-hero" id="moodHero">
+          <div class="hero-content">
+            <h2 id="heroTitle">Awaiting Your Vibe</h2>
+            <p id="heroSubtitle">Chat in English, Hindi, or Hinglish to generate a curated playlist.</p>
+            <button class="primary-btn"><i class="ph-fill ph-play"></i> Play Mix</button>
+          </div>
+        </section>
+
+        <!-- Track List Section -->
+        <section class="tracks-section">
+          <div class="section-header">
+            <h3>Recommended Tracks</h3>
+            <button class="text-btn">See All</button>
+          </div>
+          
+          <div class="track-list">
+            <div class="track-header">
+              <span class="col-hashtag">#</span>
+              <span class="col-title">Title</span>
+              <span class="col-album">Album</span>
+              <span class="col-time"><i class="ph ph-clock"></i></span>
+            </div>
+            <div id="tracksContainer">
+              <!-- Empty state -->
+              <div class="empty-state">
+                <i class="ph ph-music-notes-simple"></i>
+                <p>No tracks yet. Tell the AI how you feel!</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Persistent Bottom Player -->
+  <div class="bottom-player" id="bottomPlayer" style="display: none;">
+    <!-- Now Playing Info -->
+    <div class="now-playing">
+      <div class="cover-art-container">
+        <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&w=100&h=100&q=80" alt="Blank Cover" class="cover-art" id="playerCover">
+      </div>
+      <div class="track-info">
+        <h4 id="playerTitle">No Track Selected</h4>
+        <p id="playerArtist">-</p>
+      </div>
+      <button class="icon-btn action-btn" id="mainLikeBtn"><i class="ph ph-heart"></i></button>
+    </div>
+
+    <!-- Playback Controls -->
+    <div class="playback-controls">
+      <div class="control-buttons">
+        <button class="icon-btn"><i class="ph ph-shuffle"></i></button>
+        <button class="icon-btn"><i class="ph-fill ph-skip-back"></i></button>
+        <button class="play-pause-btn" id="mainPlayBtn"><i class="ph-fill ph-play-circle"></i></button>
+        <button class="icon-btn"><i class="ph-fill ph-skip-forward"></i></button>
+        <button class="icon-btn"><i class="ph ph-repeat"></i></button>
+      </div>
+      <div class="progress-wrap">
+        <span class="time" id="currentTime">0:00</span>
+        <div class="progress-bar-bg" id="progressBarBg">
+          <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+          <div class="progress-handle"></div>
+        </div>
+        <span class="time" id="totalTime">0:00</span>
+      </div>
+    </div>
+
+    <!-- Extra Actions -->
+    <div class="player-actions">
+      <button class="icon-btn"><i class="ph ph-microphone-stage"></i></button>
+      <button class="icon-btn"><i class="ph ph-queue"></i></button>
+      <button class="icon-btn" id="muteBtn"><i class="ph ph-speaker-high"></i></button>
+      <div class="volume-slider" id="volumeSlider">
+        <div class="volume-fill" id="volumeFill" style="width: 70%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- YouTube IFrame Player (Hidden) -->
+  <div id="yt-player" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px;"></div>
+  
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="app.js"></script>
+</body>
+</html>
